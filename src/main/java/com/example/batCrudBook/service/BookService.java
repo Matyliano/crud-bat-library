@@ -1,33 +1,47 @@
 package com.example.batCrudBook.service;
 
+import com.example.batCrudBook.converter.BookConverter;
+import com.example.batCrudBook.dto.BookDto;
 import com.example.batCrudBook.entity.Book;
 import com.example.batCrudBook.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class BookService {
 
+    private final BookRepository bookRepository;
+    private final BookConverter converter;
+
     @Autowired
-    private BookRepository bookRepository;
-
-
-    public List<Book> listAllBooks(){
-        return bookRepository.findAll();
+    public BookService(BookRepository bookRepository, BookConverter converter) {
+        this.bookRepository = bookRepository;
+        this.converter = converter;
     }
 
-    public Book getBookById(Long id){
-        return bookRepository.getOne( id );
+    public Optional<BookDto> getBookById(Long id) {
+        Optional<Book> bookById = bookRepository.findById(id);
+        return bookById.map(converter::convert);
     }
 
-    public Book saveBook(Book book){
-        return bookRepository.save( book );
+
+    public List<BookDto> findAll() {
+        return bookRepository.findAll().stream().map(converter::convert).collect(Collectors.toList());
     }
 
-    public void deleteBook(Long id){
-        bookRepository.deleteById( id );
+    public BookDto saveBook(BookDto bookdto) {
+        Book entityForNewBook = converter.convert(bookdto);
+        Book save = bookRepository.save(entityForNewBook);
+        return converter.convert(save);
+
+    }
+
+    public void delete(Long id) {
+        bookRepository.deleteById(id);
     }
 
 }
